@@ -1,16 +1,36 @@
 use anyhow::{anyhow, Ok, Result};
-use git2::{self, build::RepoBuilder, Repository};
+use git2::{self, build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks, Repository};
 use reqwest::Client;
-use std::path;
+use std::path::{self, Path};
 use tokio::process::Command;
 
 pub fn open_repository(path: &str) -> Result<Repository, git2::Error> {
     Repository::open(path)
 }
 
-pub async fn clone_repo(url: &str, path_str: &str) -> Result<Repository> {
+pub async fn _clone_repo(url: &str, path_str: &str) -> Result<Repository> {
     let repo = RepoBuilder::new().clone(url, path::Path::new(path_str))?;
     Ok(repo)
+}
+
+pub async fn clone_repo(url: &str, dest: &str) -> Result<()> {
+    let path = Path::new(dest);
+    if path.exists() {
+        return Err(anyhow!("Destination path already exists: {}", dest));
+    }
+
+    let mut builder = RepoBuilder::new();
+    let mut fetch_options = FetchOptions::new();
+    fetch_options.remote_callbacks(remote_callbacks());
+
+    builder.fetch_options(fetch_options).clone(url, path)?;
+    Ok(())
+}
+
+fn remote_callbacks<'a>() -> RemoteCallbacks<'a> {
+    let mut remote_callbacks = RemoteCallbacks::new();
+    remote_callbacks.credentials(|_url, _username_from_url, _allow_types| Cred::default());
+    remote_callbacks
 }
 
 pub async fn git_exists(url: &str) -> Result<bool> {
