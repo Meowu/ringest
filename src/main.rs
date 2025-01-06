@@ -1,8 +1,9 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use git::{git_exists, is_valid_git_url};
 
+mod file;
 mod git;
 
 #[tokio::main]
@@ -24,7 +25,14 @@ async fn main() -> Result<()> {
     let clone_dest = format!("repos/{}", repo_name);
     println!("Ready to clone into: {}", clone_dest);
 
-    git::clone_repo(bore, &clone_dest).await?;
-    println!("Successfully cloned repository to: {:?}", clone_dest);
+    // git::clone_repo(bore, &clone_dest).await?;
+    // println!("Successfully cloned repository to: {:?}", clone_dest);
+    let contents = file::read_and_concat_files(&clone_dest, "src").await?;
+
+    let mut output_path = PathBuf::from(&clone_dest);
+    output_path.push("llm.txt");
+    std::fs::write(&output_path, contents)?;
+    println!("Successfully written content to {}", output_path.display());
+
     Ok(())
 }
