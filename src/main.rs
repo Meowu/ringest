@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-
+use std::env;
 use anyhow::{anyhow, Result};
 use git::{git_exists, is_valid_git_url};
 
@@ -37,14 +37,14 @@ async fn main() -> Result<()> {
     // std::fs::write(&output_path, contents)?;
     // println!("Successfully written content to {}", output_path.display());
 
-    let api_url = "https://api.openai.com/v1/chat/completions"
+    let api_url = "https://api.openai.com/v1/chat/completions";
     let model = "gpt-4o";
     let content = "What's the sky color?";
-    let api_key = "";
+    let api_key = env::var("OPENAI_API_KEY").expect("API_KEY not exists");
 
     let llm_client = llm::OpenAIClient::new(api_url);
 
-    let answer = llm::send_to_llm(&llm_client, api_key, model, content).await?;
+    let answer = llm::send_to_llm(&llm_client, &api_key, model, content).await?;
     println!("\n{}\nLLM Response:\n{}", content, answer);
     Ok(())
 }
