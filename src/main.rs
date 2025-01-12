@@ -22,8 +22,8 @@ struct Cli {
     #[arg(short, long)]
     copy: bool,
 
-    #[arg(short, long)]
-    output: Option<String>,
+    #[arg(short, long, default_value = "./llms.txt")]
+    output: PathBuf,
 
     #[arg(short, long)]
     include: Option<String>,
@@ -39,12 +39,13 @@ async fn main() -> Result<()> {
     let is_remote = address.starts_with("http");
 
     let mut code_text = String::new();
-    let output_path = if let Some(output) = cli.output {
-        PathBuf::from(&output)
-    } else {
-        PathBuf::from(".")
-    };
-    let output_path = output_path.join("llms.txt");
+    // let output_path = if let Some(output) = cli.output {
+    //     PathBuf::from(&output)
+    // } else {
+    //     PathBuf::from(".")
+    // };
+    // let output_path = output_path.join("llms.txt");
+    let output_path = cli.output;
 
     let src_dir = if is_remote {
         let temp_dir = tempdir()?;
