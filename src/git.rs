@@ -15,9 +15,9 @@ pub async fn _clone_repo(url: &str, path_str: &str) -> Result<Repository> {
 
 pub async fn clone_repo(url: &str, dest: &str) -> Result<()> {
     let path = Path::new(dest);
-    if path.exists() {
-        return Err(anyhow!("Destination path already exists: {}", dest));
-    }
+    // if path.exists() {
+    //     return Err(anyhow!("Destination path already exists: {}", dest));
+    // }
 
     let mut builder = RepoBuilder::new();
     let mut fetch_options = FetchOptions::new();
