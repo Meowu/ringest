@@ -6,10 +6,12 @@ fn is_text_file(file_path: &Path) -> bool {
     if let Some(ext) = file_path.extension() {
         let ext_str = ext.to_string_lossy().to_lowercase();
         match ext_str.as_str() {
-            "rs" | "py" | "js" | "ts" | "java" | "c" | "cpp" | "h" | "hpp" | "go" | "php"
-            | "rb" | "swift" | "kt" | "scala" | "sql" | "css" | "html" | "htm" | "xml" | "json"
-            | "yaml" | "yml" | "toml" | "sh" | "bash" | "dockerfile" | "makefile" | "txt"
-            | "md" | "markdown" | "text" | "log" | "conf" => true,
+            "rs" | "py" | "js" | "ts" | "tsx" | "jsx" | "mjs" | "cjs" | "mts" | "java" | "c"
+            | "cpp" | "h" | "hpp" | "go" | "php" | "rb" | "swift" | "kt" | "scala" | "sql"
+            | "css" | "html" | "htm" | "xml" | "json" | "yaml" | "yml" | "toml" | "sh" | "bash"
+            | "dockerfile" | "makefile" | "txt" | "md" | "markdown" | "text" | "log" | "conf" => {
+                true
+            }
             _ => false,
         }
     } else {
