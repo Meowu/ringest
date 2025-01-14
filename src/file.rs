@@ -1,6 +1,54 @@
 use anyhow::{anyhow, Result};
+use ignore::{overrides::OverrideBuilder, WalkBuilder};
 use std::path::{Path, PathBuf};
-use std::{fs, path};
+use std::{error, fs, path};
+
+pub fn walk_dir(
+    root: &str,
+    include_patterns: &[&str],
+    exclude_patterns: &[&str],
+    respect_gitignore: bool,
+) -> Result<Vec<String>, Box<dyn error::Error>> {
+    let mut files = Vec::new();
+
+    let mut overrides_builder = OverrideBuilder::new(root);
+
+    for pattern in include_patterns {
+        overrides_builder.add(&format!("!{}", pattern))?;
+    }
+
+    for pattern in exclude_patterns {
+        overrides_builder.add(&format!("{}", pattern))?;
+    }
+
+    let overrides = overrides_builder.build()?;
+
+    let mut builder = WalkBuilder::new(root);
+    builder.standard_filters(respect_gitignore);
+
+    builder.overrides(overrides);
+
+    for result in builder.build() {
+        match result {
+            Ok(entry) => {
+                // skip directory
+                if entry.file_type().map_or(false, |ft| ft.is_dir()) {
+                    // println!("Directory: {}", entry.path().display());
+                    continue;
+                }
+
+                if let Some(path_str) = entry.path().to_str() {
+                    files.push(path_str.to_string());
+                }
+            }
+            Err(err) => {
+                eprint!("遍历错误: {}", err);
+            }
+        }
+    }
+
+    Ok(files)
+}
 
 fn is_text_file(file_path: &Path) -> bool {
     if let Some(ext) = file_path.extension() {
@@ -65,17 +113,16 @@ async fn process_path(repo_path: &Path, path: &str, content: &mut String) -> Res
     Ok(())
 }
 
-pub async fn read_and_concat_files(repo_path: &str, files: &str) -> Result<String> {
+pub async fn read_and_concat_files(repo_path: &str, files: Vec<String>) -> Result<String> {
     let repo_path = Path::new(repo_path);
-    let file_list: Vec<&str> = files.split(',').map(|s| s.trim()).collect();
 
     let mut content = String::new();
 
-    for path in file_list {
+    for path in files {
         if path.is_empty() {
             continue;
         }
-        process_path(repo_path, path, &mut content).await?;
+        process_path(repo_path, &path, &mut content).await?;
     }
     Ok(content)
 }

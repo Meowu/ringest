@@ -37,15 +37,9 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     let address = cli.address;
     let is_remote = address.starts_with("http");
+    let output_path = cli.output;
 
     let mut code_text = String::new();
-    // let output_path = if let Some(output) = cli.output {
-    //     PathBuf::from(&output)
-    // } else {
-    //     PathBuf::from(".")
-    // };
-    // let output_path = output_path.join("llms.txt");
-    let output_path = cli.output;
 
     let src_dir = if is_remote {
         let temp_dir = tempdir()?;
@@ -68,16 +62,24 @@ async fn main() -> Result<()> {
     } else {
         String::from(".")
     };
-    let code = file::read_and_concat_files(&src_dir, &cli.src).await?;
+    let include_patterns: Vec<&str> = if let Some(pattern) = &cli.include {
+        vec![pattern]
+    } else {
+        vec![]
+    };
+    let exclude_patterns = cli
+        .exclude
+        .as_deref()
+        .map(|pattern| vec![pattern])
+        .unwrap_or_default();
+
+    let files = file::walk_dir(&src_dir, &include_patterns, &exclude_patterns, true).unwrap();
+
+    let code = file::read_and_concat_files(&src_dir, files).await?;
     code_text.push_str(&code);
 
     let lines: Vec<&str> = code_text.lines().collect();
     let len = lines.iter().count();
-    // println!(
-    //     "Successfully written concat content to {}, {} lines in total.",
-    //     output_path.display(),
-    //     len
-    // );
 
     // todo: calculate token cost.
     if cli.copy {
