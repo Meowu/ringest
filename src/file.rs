@@ -13,12 +13,15 @@ pub fn walk_dir(
 
     let mut overrides_builder = OverrideBuilder::new(root);
 
+    // Override 规则中的 ! 含义与标准 .gitignore 文件中的含义是相反的。
+    // overrides.add("include_pattern") => 列入白名单 (Whitelist)
+    // overrides.add("!exclude_pattern") => 列入黑名单/排除 (Ignore/Exclude within overrides)
     for pattern in include_patterns {
-        overrides_builder.add(&format!("!{}", pattern))?;
+        overrides_builder.add(&format!("{}", pattern))?;
     }
 
     for pattern in exclude_patterns {
-        overrides_builder.add(&format!("{}", pattern))?;
+        overrides_builder.add(&format!("!{}", pattern))?;
     }
 
     let overrides = overrides_builder.build()?;
@@ -27,6 +30,8 @@ pub fn walk_dir(
     builder.standard_filters(respect_gitignore);
 
     builder.overrides(overrides);
+
+    // builder.follow_links(true).hidden(false);
 
     for result in builder.build() {
         match result {
